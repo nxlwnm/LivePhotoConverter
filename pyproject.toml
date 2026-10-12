@@ -1,0 +1,46 @@
+[project]
+name = "livephoto-converter"
+version = "0.1.0"
+description = "Android / iOS / HarmonyOS 动态照片互转工具链"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = []
+
+[project.scripts]
+lpconv = "livephoto.cli.main:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = { "" = "Src" }
+
+[tool.setuptools.packages.find]
+where = ["Src"]
+include = ["livephoto*"]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.13",
+    "pytest>=8.3",
+    "ruff>=0.8",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py313"
+src = ["Src"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "UP", "B", "SIM"]
+
+[tool.mypy]
+python_version = "3.13"
+warn_unused_ignores = true
+warn_return_any = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["Src/tests"]
+addopts = "-q"

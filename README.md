@@ -26,9 +26,27 @@
 | `Tmp/` | 临时文件（`Tmp/samples/` 放样本，不入库） |
 | `Log/` | 运行日志（不入库） |
 
+## 快速开始
+
+Windows（PowerShell）：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\setup.ps1
+uv run lpconv doctor
+```
+
+macOS / Linux：
+
+```bash
+bash scripts/setup.sh
+uv run lpconv doctor
+```
+
+`setup` 会检查 Python 与 uv、同步依赖、检测外部工具（ffmpeg / ffprobe / exiftool / hdc）、创建 `Tmp/` 与 `Log/`，最后输出环境报告。当前仅 `doctor` 可用，`convert` / `probe` / `verify` 将在 M3 提供。
+
 ## 开始之前
 
-完整的项目目标、范围、架构与开发规范见 [`Doc/00-项目总览.md`](Doc/00-项目总览.md)，文档索引在其中。
+完整的项目目标、范围、架构与开发规范见 [`Doc/00-项目总览.md`](Doc/00-项目总览.md)，文档索引在其中。环境细节与依赖清单见 [`Doc/40-环境搭建与依赖管理.md`](Doc/40-环境搭建与依赖管理.md)。
 
 ## 许可
 
