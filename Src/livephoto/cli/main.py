@@ -5,13 +5,16 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import platform
+import subprocess
 import sys
 from dataclasses import dataclass
 
 from livephoto import __version__
+from livephoto.device.hdc_bridge import CONNECTED, UNAUTHORIZED, list_devices
 from livephoto.media.tools import detect_tool
 from livephoto.utils.logging_setup import get_logger, setup_logging
-from livephoto.utils.paths import ensure_dirs
+from livephoto.utils.paths import create_run_dir, ensure_dirs
 
 EXTERNAL_TOOLS = ("ffmpeg", "ffprobe", "exiftool", "hdc")
 REQUIRED_PYTHON = (3, 13)
@@ -63,13 +66,69 @@ def _check_dirs(tmp_dir, log_dir) -> list[CheckResult]:
     return results
 
 
+def _check_harmonyos_devices() -> list[CheckResult]:
+    """列出 hdc 可见的设备，并标注授权状态。"""
+    try:
+        devices = list_devices()
+    except (OSError, subprocess.SubprocessError) as exc:
+        return [CheckResult("device:harmonyos", "WARN", f"hdc 调用失败：{exc}")]
+
+    if not devices:
+        return [CheckResult("device:harmonyos", "WARN", "未检测到设备（hdc list targets 为空）")]
+
+    results = []
+    for device in devices:
+        if device.state == CONNECTED:
+            results.append(CheckResult(f"device:{device.serial}", "OK", CONNECTED))
+        elif device.state == UNAUTHORIZED:
+            results.append(
+                CheckResult(f"device:{device.serial}", "WARN", "未授权：请在设备上允许 USB 调试（必要时重插数据线）")
+            )
+        else:
+            results.append(CheckResult(f"device:{device.serial}", "WARN", device.state))
+    return results
+
+
+def _check_ios_device() -> CheckResult | None:
+    """Windows 下通过 Apple Mobile Device Service 判断 iOS 设备服务是否可用。"""
+    if platform.system() != "Windows":
+        return None
+
+    result = subprocess.run(
+        ["sc", "query", "Apple Mobile Device Service"],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        timeout=15,
+        check=False,
+    )
+    running = "RUNNING" in (result.stdout or "").upper()
+    detail = (
+        "Apple Mobile Device Service 运行中（仅表示服务可用，不代表设备已连接）"
+        if running
+        else "未检测到 Apple Mobile Device Service（需安装 iTunes 或 Apple 设备支持）"
+    )
+    return CheckResult("device:ios", "OK" if running else "WARN", detail)
+
+
 def _cmd_doctor(args: argparse.Namespace) -> int:
     tmp_dir, log_dir = ensure_dirs()
     run_id = setup_logging(log_dir)
+    run_dir = create_run_dir(run_id)
     logger = get_logger(__name__)
     logger.info("doctor 开始，run_id=%s", run_id)
 
-    checks = [_check_python(), *_check_tools(), *_check_dirs(tmp_dir, log_dir)]
+    checks = [
+        _check_python(),
+        *_check_tools(),
+        *_check_dirs(tmp_dir, log_dir),
+        CheckResult("dir:run", "OK", str(run_dir)),
+    ]
+    ios = _check_ios_device()
+    if ios is not None:
+        checks.append(ios)
+    checks.extend(_check_harmonyos_devices())
 
     if args.json:
         print(json.dumps({"run_id": run_id, "checks": [vars(c) for c in checks]}, ensure_ascii=False, indent=2))

@@ -7,7 +7,7 @@ import sys
 
 from livephoto.core.errors import ErrorCode, LivePhotoError
 from livephoto.media.tools import detect_tool
-from livephoto.utils.paths import ensure_dirs, project_root
+from livephoto.utils.paths import create_run_dir, ensure_dirs, project_root
 
 
 def test_project_root_has_pyproject() -> None:
@@ -17,6 +17,12 @@ def test_project_root_has_pyproject() -> None:
 def test_ensure_dirs_creates_tmp_and_log() -> None:
     tmp_dir, log_dir = ensure_dirs()
     assert tmp_dir.is_dir() and log_dir.is_dir()
+
+
+def test_create_run_dir_isolated_under_tmp() -> None:
+    run_dir = create_run_dir("test-run-id")
+    assert run_dir.is_dir()
+    assert run_dir.parent.name == "Tmp"
 
 
 def test_error_carries_code() -> None:

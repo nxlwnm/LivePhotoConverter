@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 from dataclasses import dataclass
+
+ENV_PREFIX = "LPCONV_"
 
 
 @dataclass
@@ -22,12 +25,19 @@ VERSION_ARGS: dict[str, list[str]] = {
     "ffmpeg": ["-version"],
     "ffprobe": ["-version"],
     "exiftool": ["-ver"],
+    "hdc": ["-v"],
 }
+
+
+def resolve_executable(name: str) -> str | None:
+    """解析可执行文件路径：优先环境变量 `LPCONV_<NAME>_PATH`，其次 PATH。"""
+    override = os.environ.get(f"{ENV_PREFIX}{name.upper()}_PATH")
+    return override or shutil.which(name)
 
 
 def detect_tool(name: str) -> ToolStatus:
     """探测工具是否可用；未登记版本参数的工具只检测存在性。"""
-    path = shutil.which(name)
+    path = resolve_executable(name)
     if path is None:
         return ToolStatus(name=name, found=False, error="not found in PATH")
 
@@ -36,7 +46,15 @@ def detect_tool(name: str) -> ToolStatus:
         return ToolStatus(name=name, found=True, path=path)
 
     try:
-        result = subprocess.run([path, *args], capture_output=True, text=True, timeout=10, check=False)
+        result = subprocess.run(
+            [path, *args],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=10,
+            check=False,
+        )
     except (OSError, subprocess.SubprocessError) as exc:
         return ToolStatus(name=name, found=True, path=path, error=str(exc))
 
