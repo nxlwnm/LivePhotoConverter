@@ -4,7 +4,9 @@ version = "0.1.0"
 description = "Android / iOS / HarmonyOS 动态照片互转工具链"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "pymobiledevice3>=11.28.2",
+]
 
 [project.scripts]
 lpconv = "livephoto.cli.main:main"
