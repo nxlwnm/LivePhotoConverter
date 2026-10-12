@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+
+# 工具缓存
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# uv
+.uv/
+
+# 项目运行目录（结构保留，内容不入库）
+Tmp/*
+!Tmp/.gitkeep
+Log/*
+!Log/.gitkeep
+
+# 敏感与临时
+*.log
+.env
+.env.*
+*.pem
+*.key
+
+# 系统与编辑器
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

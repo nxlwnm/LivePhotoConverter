@@ -1,0 +1,20 @@
+# 统一换行，避免 Windows / macOS 混用导致大量无意义 diff
+* text=auto eol=lf
+
+# Windows 脚本保持 CRLF
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Shell 脚本保持 LF
+*.sh text eol=lf
+
+# 二进制媒体
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.heic binary
+*.heif binary
+*.mp4 binary
+*.mov binary
+*.zip binary
