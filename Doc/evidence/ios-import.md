@@ -92,17 +92,35 @@ $ pymobiledevice3 afc ls /DCIM/102APPLE
 | --- | --- |
 | iTunes | 未安装 |
 | iCloud for Windows（照片上传目录） | 未安装 / 未启用 |
-| Apple 官方 UWP 应用（Apple Devices 等） | 无 |
+| **Apple Devices**（`AppleInc.AppleDevices` 1.1540.24088.0） | **已安装**（GUI） |
+| LocalSend GUI / CLI | 未安装；winget 可获取（`LocalSend.LocalSend` / `LocalSend.LocalSend.CLI`，1.18.2） |
 | Apple Mobile Device Service（驱动） | 运行中 |
-| AFC（pymobiledevice3） | 可用（读、写均可） |
+| AFC（pymobiledevice3） | 可用（读、写均可，但写入不入库） |
 
 ## 7. 候选回灌方案（待评估）
 
 | 方案 | 可行性 | 成本 | Live Photo 保留 | 可脚本化 |
 | --- | --- | --- | --- | --- |
-| A'. 写入 DCIM 后重启设备触发索引 | 待验证 | 极低 | 未知 | 是 |
+| A'. 写入 DCIM 后重启触发索引 | **已排除**（实测重启无效） | - | - | - |
+| **LocalSend（CLI）** | 文件传输可行；**入库方式与配对行为未知** | 低（开源，winget 可装 CLI） | **未知，需判别实验** | **是**（`localsend-cli send --to <IP>` 非交互） |
+| Apple Devices 照片同步 | 已安装，GUI 同步 | 低 | 待验证（同步可能转码） | 否（GUI） |
 | B. iCloud for Windows 上传目录 | 官方，需安装并登录 | 中 | 待验证 | 是（复制文件） |
-| C. iTunes / Apple Devices 照片同步 | 官方，需安装 | 中 | 待验证（可能转码） | 有限 |
 | D. 第三方工具（iMazing 等） | 待评估 | 中 | 待验证 | 取决于是否提供 CLI |
 | E. 自建 iOS App（PhotoKit 配对资源写入） | 官方 API，原理上可行 | 高（需开发者签名，按 N1.7 评审） | 是 | 是 |
 | F. iPhone 端快捷指令 + iCloud Drive | 待验证 | 低 | 可能丢失配对 | 半自动 |
+
+### 7.1 LocalSend 评估（依据官方 README）
+
+- 跨平台：Windows / macOS / Linux / Android / iOS（iOS 13+）；通信为 HTTPS + REST，端口 53317；
+- **提供 CLI**：`localsend-cli send <文件...> --to <别名|IP>`，可非交互指定目标 → 与 ffmpeg 同构，可用 subprocess 封装进工具层；
+- README **未提及** Live Photo / 实况照片，也未说明 iOS 端接收后保存到「文件」还是「相册」；
+- 作为通用文件传输工具，预期不会调用 PhotoKit 的配对资源接口（pairedVideo）。
+
+### 7.2 判别实验（决定项目路线）
+
+用任一通道把**原生的一对** `IMG_2002.HEIC` + `IMG_2002.MOV`（两者 ContentIdentifier 相同）送达 iPhone 相册，观察：
+
+- **识别为一张 Live Photo** → 说明只要元数据正确，任意入库通道都能成立，转换方案可行；
+- **变成两个独立文件** → 说明必须由 PhotoKit 显式配对，需走 E 方案或改用支持实况照片的第三方 App。
+
+该实验决定后续路线，优先于任何工程化工作。
